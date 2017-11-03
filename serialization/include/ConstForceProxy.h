@@ -1,5 +1,5 @@
-#ifndef OPENMM_EXAMPLE_FORCE_PROXY_H_
-#define OPENMM_EXAMPLE_FORCE_PROXY_H_
+#ifndef OPENMM_CONSTFORCE_FORCE_PROXY_H_
+#define OPENMM_CONSTFORCE_FORCE_PROXY_H_
 
 /* -------------------------------------------------------------------------- *
  *                                OpenMMExample                                 *
@@ -32,7 +32,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "internal/windowsExportExample.h"
+#include "internal/windowsExportConstForce.h"
 #include "openmm/serialization/SerializationProxy.h"
 
 namespace OpenMM {
@@ -41,7 +41,7 @@ namespace OpenMM {
  * This is a proxy for serializing ConstForce objects.
  */
 
-class OPENMM_EXPORT_EXAMPLE ConstForceProxy : public SerializationProxy {
+class OPENMM_EXPORT_CONSTFORCE ConstForceProxy : public SerializationProxy {
 public:
     ConstForceProxy();
     void serialize(const void* object, SerializationNode& node) const;
@@ -50,4 +50,4 @@ public:
 
 } // namespace OpenMM
 
-#endif /*OPENMM_EXAMPLE_FORCE_PROXY_H_*/
+#endif /*OPENMM_CONSTFORCE_FORCE_PROXY_H_*/

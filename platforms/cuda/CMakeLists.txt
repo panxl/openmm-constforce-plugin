@@ -1,13 +1,13 @@
 #---------------------------------------------------
-# OpenMM Example Plugin CUDA Platform
+# OpenMM ConstForce Plugin CUDA Platform
 #----------------------------------------------------
 
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(EXAMPLE_CUDA_LIBRARY_NAME ConstForcePluginCUDA)
+SET(CONSTFORCE_CUDA_LIBRARY_NAME ConstForcePluginCUDA)
 
-SET(SHARED_TARGET ${EXAMPLE_CUDA_LIBRARY_NAME})
+SET(SHARED_TARGET ${CONSTFORCE_CUDA_LIBRARY_NAME})
 
 
 # These are all the places to search for header files which are
@@ -61,7 +61,7 @@ ADD_LIBRARY(${SHARED_TARGET} SHARED ${SOURCE_FILES} ${SOURCE_INCLUDE_FILES} ${AP
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${CUDA_LIBRARIES})
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} OpenMM)
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} OpenMMCUDA)
-TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${EXAMPLE_LIBRARY_NAME})
+TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${CONSTFORCE_LIBRARY_NAME})
 SET_TARGET_PROPERTIES(${SHARED_TARGET} PROPERTIES
     COMPILE_FLAGS "-DOPENMM_BUILDING_SHARED_LIBRARY ${EXTRA_COMPILE_FLAGS}"
     LINK_FLAGS "${EXTRA_COMPILE_FLAGS}")

@@ -47,7 +47,7 @@ class System;
  * This is the internal implementation of ConstForce.
  */
 
-class OPENMM_EXPORT_EXAMPLE ConstForceImpl : public OpenMM::ForceImpl {
+class OPENMM_EXPORT_CONSTFORCE ConstForceImpl : public OpenMM::ForceImpl {
 public:
     ConstForceImpl(const ConstForce& owner);
     ~ConstForceImpl();

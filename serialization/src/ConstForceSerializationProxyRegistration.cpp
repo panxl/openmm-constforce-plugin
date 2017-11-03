@@ -44,7 +44,7 @@
 
 #if defined(WIN32)
     #include <windows.h>
-    extern "C" OPENMM_EXPORT_EXAMPLE void registerConstForceSerializationProxies();
+    extern "C" OPENMM_EXPORT_CONSTFORCE void registerConstForceSerializationProxies();
     BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
         if (ul_reason_for_call == DLL_PROCESS_ATTACH)
             registerConstForceSerializationProxies();
@@ -57,6 +57,6 @@
 using namespace ConstForcePlugin;
 using namespace OpenMM;
 
-extern "C" OPENMM_EXPORT_EXAMPLE void registerConstForceSerializationProxies() {
+extern "C" OPENMM_EXPORT_CONSTFORCE void registerConstForceSerializationProxies() {
     SerializationProxy::registerProxy(typeid(ConstForce), new ConstForceProxy());
 }

@@ -35,7 +35,7 @@
 #include "openmm/Context.h"
 #include "openmm/Force.h"
 #include <vector>
-#include "internal/windowsExportExample.h"
+#include "internal/windowsExportConstForce.h"
 
 namespace ConstForcePlugin {
 
@@ -44,7 +44,7 @@ namespace ConstForcePlugin {
  * serve as an example of how to write plugins.
  */
 
-class OPENMM_EXPORT_CONST ConstForce : public OpenMM::Force {
+class OPENMM_EXPORT_CONSTFORCE ConstForce : public OpenMM::Force {
 public:
     /**
      * Create an ConstForce.

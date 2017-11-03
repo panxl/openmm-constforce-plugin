@@ -1,13 +1,13 @@
 #---------------------------------------------------
-# OpenMM Example Plugin OpenCL Platform
+# OpenMM ConstForce Plugin OpenCL Platform
 #----------------------------------------------------
 
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(OPENMMEXAMPLEOPENCL_LIBRARY_NAME ConstForcePluginOpenCL)
+SET(OPENMMCONSTFORCEOPENCL_LIBRARY_NAME ConstForcePluginOpenCL)
 
-SET(SHARED_TARGET ${OPENMMEXAMPLEOPENCL_LIBRARY_NAME})
+SET(SHARED_TARGET ${OPENMMCONSTFORCEOPENCL_LIBRARY_NAME})
 
 
 # These are all the places to search for header files which are
@@ -61,7 +61,7 @@ ADD_LIBRARY(${SHARED_TARGET} SHARED ${SOURCE_FILES} ${SOURCE_INCLUDE_FILES} ${AP
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${OPENCL_LIBRARIES})
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} OpenMM)
 TARGET_LINK_LIBRARIES(${SHARED_TARGET} OpenMMOpenCL)
-TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${SHARED_EXAMPLE_TARGET})
+TARGET_LINK_LIBRARIES(${SHARED_TARGET} ${SHARED_CONSTFORCE_TARGET})
 SET_TARGET_PROPERTIES(${SHARED_TARGET} PROPERTIES
     COMPILE_FLAGS "-DOPENMM_BUILDING_SHARED_LIBRARY ${EXTRA_COMPILE_FLAGS}"
     LINK_FLAGS "${EXTRA_COMPILE_FLAGS}")
