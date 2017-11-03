@@ -131,7 +131,7 @@ void testChangingParameters() {
     const double k2 = 2.2;
     const double length2 = 0.9;
     force->setBondParameters(0, 0, 1, length2, k2);
-    force->updateParametersInContext(context);
+    force->updateForceInContext(context);
     state = context.getState(State::Energy);
     ASSERT_EQUAL_TOL(k2*pow(1.0-length2, 4), state.getPotentialEnergy(), 1e-5);
 }

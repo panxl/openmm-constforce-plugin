@@ -44,12 +44,12 @@ ConstForceProxy::ConstForceProxy() : SerializationProxy("ConstForce") {
 void ConstForceProxy::serialize(const void* object, SerializationNode& node) const {
     node.setIntProperty("version", 1);
     const ConstForce& force = *reinterpret_cast<const ConstForce*>(object);
-    SerializationNode& bonds = node.createChildNode("Bonds");
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int particle1, particle2;
-        double distance, k;
-        force.getBondParameters(i, particle1, particle2, distance, k);
-        bonds.createChildNode("Bond").setIntProperty("p1", particle1).setIntProperty("p2", particle2).setDoubleProperty("d", distance).setDoubleProperty("k", k);
+    SerializationNode& constforces = node.createChildNode("ConstForces");
+    for (int i = 0; i < force.getNumParticles(); i++) {
+        int particle;
+        Vec3 pforce;
+        force.getParticleForce(i, particle, pforce);
+        constforces.createChildNode("Force").setIntProperty("p", particle).setDoubleProperty("fx", pforce[0]).setDoubleProperty("fy", pforce[1]).setDoubleProperty("fz", pforce[2]);
     }
 }
 
@@ -58,10 +58,10 @@ void* ConstForceProxy::deserialize(const SerializationNode& node) const {
         throw OpenMMException("Unsupported version number");
     ConstForce* force = new ConstForce();
     try {
-        const SerializationNode& bonds = node.getChildNode("Bonds");
-        for (int i = 0; i < (int) bonds.getChildren().size(); i++) {
-            const SerializationNode& bond = bonds.getChildren()[i];
-            force->addBond(bond.getIntProperty("p1"), bond.getIntProperty("p2"), bond.getDoubleProperty("d"), bond.getDoubleProperty("k"));
+        const SerializationNode& constforces = node.getChildNode("ConstForces");
+        for (int i = 0; i < (int) constforces.getChildren().size(); i++) {
+            const SerializationNode& constforce = constforces.getChildren()[i];
+            force->addParticle(constforce.getIntProperty("p"), Vec3(constforce.getIntProperty("fx"), constforce.getDoubleProperty("fy"), constforce.getDoubleProperty("fz")));
         }
     }
     catch (...) {

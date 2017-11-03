@@ -68,16 +68,6 @@ std::vector<std::string> ConstForceImpl::getKernelNames() {
     return names;
 }
 
-vector<pair<int, int> > ConstForceImpl::getBondedParticles() const {
-    int numBonds = owner.getNumBonds();
-    vector<pair<int, int> > bonds(numBonds);
-    for (int i = 0; i < numBonds; i++) {
-        double length, k;
-        owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
-    }
-    return bonds;
-}
-
-void ConstForceImpl::updateParametersInContext(ContextImpl& context) {
-    kernel.getAs<CalcConstForceKernel>().copyParametersToContext(context, owner);
+void ConstForceImpl::updateForceInContext(ContextImpl& context) {
+    kernel.getAs<CalcConstForceKernel>().copyForceToContext(context, owner);
 }

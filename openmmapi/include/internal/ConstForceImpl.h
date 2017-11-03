@@ -63,8 +63,7 @@ public:
         return std::map<std::string, double>(); // This force field doesn't define any parameters.
     }
     std::vector<std::string> getKernelNames();
-    std::vector<std::pair<int, int> > getBondedParticles() const;
-    void updateParametersInContext(OpenMM::ContextImpl& context);
+    void updateForceInContext(OpenMM::ContextImpl& context);
 private:
     const ConstForce& owner;
     OpenMM::Kernel kernel;

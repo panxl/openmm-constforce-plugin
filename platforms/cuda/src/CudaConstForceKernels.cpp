@@ -98,13 +98,13 @@ double CudaCalcConstForceKernel::execute(ContextImpl& context, bool includeForce
     return 0.0;
 }
 
-void CudaCalcConstForceKernel::copyParametersToContext(ContextImpl& context, const ConstForce& force) {
+void CudaCalcConstForceKernel::copyForceToContext(ContextImpl& context, const ConstForce& force) {
     cu.setAsCurrent();
     int numContexts = cu.getPlatformData().contexts.size();
     int startIndex = cu.getContextIndex()*force.getNumBonds()/numContexts;
     int endIndex = (cu.getContextIndex()+1)*force.getNumBonds()/numContexts;
     if (numBonds != endIndex-startIndex)
-        throw OpenMMException("updateParametersInContext: The number of bonds has changed");
+        throw OpenMMException("updateForceInContext: The number of bonds has changed");
     if (numBonds == 0)
         return;
     

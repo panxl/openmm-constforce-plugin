@@ -3,6 +3,18 @@
 %import(module="simtk.openmm") "swig/OpenMMSwigHeaders.i"
 %include "swig/typemaps.i"
 
+/* Convert C++ (int&, Vec3&) object to python list */
+%typemap(argout, fragment="Vec3_to_PyVec3") (int& particle, Vec3& pforce) {
+    PyObject* pyInt = PyInt_FromLong(*$1);
+    PyObject* pyVec = Vec3_to_PyVec3(*$2);
+    $result = Py_BuildValue("[N, N]", pyInt, pyVec);
+}
+
+%typemap(in, numinputs=0) (int& particle, Vec3& pforce) (int tempP, Vec3 tempF) {
+    $1 = &tempP;
+    $2 = &tempF;
+}
+
 /*
  * The following lines are needed to handle std::vector.
  * Similar lines may be needed for vectors of vectors or
@@ -32,12 +44,9 @@ import simtk.unit as unit
 /*
  * Add units to function outputs.
 */
-%pythonappend ConstForcePlugin::ConstForce::getBondParameters(int index, int& particle1, int& particle2,
-                                                             double& length, double& k) const %{
-    val[2] = unit.Quantity(val[2], unit.nanometer)
-    val[3] = unit.Quantity(val[3], unit.kilojoule_per_mole/unit.nanometer**4)
+%pythonappend ConstForcePlugin::ConstForce::getParticleForce(int index, int& particle, Vec3& pforce) const %{
+    val[1] = unit.Quantity(val[1], unit.kilojoule_per_mole/unit.nanometer)
 %}
-
 
 namespace ConstForcePlugin {
 
@@ -45,27 +54,23 @@ class ConstForce : public OpenMM::Force {
 public:
     ConstForce();
 
-    int getNumBonds() const;
+    int getNumParticles() const;
 
-    int addBond(int particle1, int particle2, double length, double k);
+    int addParticle(int particle, Vec3 force = Vec3(0.0, 0.0, 0.0));
 
-    void setBondParameters(int index, int particle1, int particle2, double length, double k);
+    void setParticleForce(int index, int particle, Vec3 pforce);
 
-    void updateParametersInContext(OpenMM::Context& context);
+    void updateForceInContext(OpenMM::Context& context);
 
     /*
      * The reference parameters to this function are output values.
      * Marking them as such will cause swig to return a tuple.
     */
-    %apply int& OUTPUT {int& particle1};
-    %apply int& OUTPUT {int& particle2};
-    %apply double& OUTPUT {double& length};
-    %apply double& OUTPUT {double& k};
-    void getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const;
-    %clear int& particle1;
-    %clear int& particle2;
-    %clear double& length;
-    %clear double& k;
+    %apply int& OUTPUT {int& particle};
+    %apply Vec3& OUTPUT {Vec3& pforce};
+    void getParticleForce(int index, int& particle, Vec3& pforce) const;
+    %clear int& particle;
+    %clear Vec3& pforce;
 };
 
 }

@@ -46,10 +46,10 @@ void testSerialization() {
     // Create a Force.
 
     ConstForce force;
-    force.addBond(0, 1, 1.0, 2.0);
-    force.addBond(0, 2, 2.0, 2.1);
-    force.addBond(2, 3, 3.0, 2.2);
-    force.addBond(5, 1, 4.0, 2.3);
+    force.addParticle(0, Vec3(1.0, 1.0, 2.0));
+    force.addParticle(0, Vec3(0.0, 2.0, 2.1));
+    force.addParticle(1, Vec3(1.0, 3.0, 2.2));
+    force.addParticle(2, Vec3(0.0, 4.0, 2.3));
 
     // Serialize and then deserialize it.
 
@@ -60,16 +60,14 @@ void testSerialization() {
     // Compare the two forces to see if they are identical.
 
     ConstForce& force2 = *copy;
-    ASSERT_EQUAL(force.getNumBonds(), force2.getNumBonds());
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int a1, a2, b1, b2;
-        double da, db, ka, kb;
-        force.getBondParameters(i, a1, a2, da, ka);
-        force2.getBondParameters(i, b1, b2, db, kb);
-        ASSERT_EQUAL(a1, b1);
-        ASSERT_EQUAL(a2, b2);
-        ASSERT_EQUAL(da, db);
-        ASSERT_EQUAL(ka, kb);
+    ASSERT_EQUAL(force.getNumParticles(), force2.getNumParticles());
+    for (int i = 0; i < force.getNumParticles(); i++) {
+        int a, b;
+        Vec3 fa, fb;
+        force.getParticleForce(i, a, fa);
+        force2.getParticleForce(i, b, fb);
+        ASSERT_EQUAL(a, b);
+        ASSERT_EQUAL(fa, fb);
     }
 }
 

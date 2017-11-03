@@ -50,20 +50,16 @@ using namespace std;
 extern "C" OPENMM_EXPORT void registerConstForceReferenceKernelFactories();
 
 void testForce() {
-    // Create a chain of particles connected by bonds.
+    // Create a system with one particle.
     
-    const int numBonds = 10;
-    const int numParticles = numBonds+1;
     System system;
-    vector<Vec3> positions(numParticles);
-    for (int i = 0; i < numParticles; i++) {
-        system.addParticle(1.0);
-        positions[i] = Vec3(i, 0.1*i, -0.3*i);
-    }
+    vector<Vec3> positions(1);
+    system.addParticle(1.0);
+    positions[0] = Vec3(0.0, 0.0, 0.0);
     ConstForce* force = new ConstForce();
+    Vec3 testForce = Vec3(-0.1, 0.0, 0.1);
+    force->addParticle(0, testForce);
     system.addForce(force);
-    for (int i = 0; i < numBonds; i++)
-        force->addBond(i, i+1, 1.0+sin(0.8*i), cos(0.3*i));
     
     // Compute the forces and energy.
 
@@ -73,74 +69,31 @@ void testForce() {
     context.setPositions(positions);
     State state = context.getState(State::Energy | State::Forces);
     
-    // See if the energy is correct.
+    // See if the energy and forces are correct.
     
     double expectedEnergy = 0;
-    for (int i = 0; i < numBonds; i++) {
-        double length = 1.0+sin(0.8*i);
-        double k = cos(0.3*i);
-        Vec3 delta = positions[i+1]-positions[i];
-        double dr = sqrt(delta.dot(delta))-length;
-        expectedEnergy += k*dr*dr*dr*dr;
-    }
     ASSERT_EQUAL_TOL(expectedEnergy, state.getPotentialEnergy(), 1e-5);
 
-    // Validate the forces by moving each particle along each axis, and see if the energy changes by the correct amount.
-    
-    double offset = 1e-3;
-    for (int i = 0; i < numParticles; i++)
-        for (int j = 0; j < 3; j++) {
-            vector<Vec3> offsetPos = positions;
-            offsetPos[i][j] = positions[i][j]-offset;
-            context.setPositions(offsetPos);
-            double e1 = context.getState(State::Energy).getPotentialEnergy();
-            offsetPos[i][j] = positions[i][j]+offset;
-            context.setPositions(offsetPos);
-            double e2 = context.getState(State::Energy).getPotentialEnergy();
-            ASSERT_EQUAL_TOL(state.getForces()[i][j], (e1-e2)/(2*offset), 1e-3);
-        }
-}
+    for (int i = 0; i < 3; i++) {
+        ASSERT_EQUAL_TOL(state.getForces()[0][i], testForce[i], 1e-5);
+    }
 
-void testChangingParameters() {
-    const double k = 1.5;
-    const double length = 0.5;
-    Platform& platform = Platform::getPlatformByName("Reference");
-    
-    // Create a system with one bond.
-    
-    System system;
-    system.addParticle(1.0);
-    system.addParticle(1.0);
-    ConstForce* force = new ConstForce();
-    force->addBond(0, 1, length, k);
-    system.addForce(force);
-    vector<Vec3> positions(2);
-    positions[0] = Vec3(1, 0, 0);
-    positions[1] = Vec3(2, 0, 0);
-    
-    // Check the energy.
-    
-    VerletIntegrator integ(1.0);
-    Context context(system, integ, platform);
-    context.setPositions(positions);
-    State state = context.getState(State::Energy);
-    ASSERT_EQUAL_TOL(k*pow(1.0-length, 4), state.getPotentialEnergy(), 1e-5);
-    
     // Modify the parameters.
     
-    const double k2 = 2.2;
-    const double length2 = 0.9;
-    force->setBondParameters(0, 0, 1, length2, k2);
-    force->updateParametersInContext(context);
-    state = context.getState(State::Energy);
-    ASSERT_EQUAL_TOL(k2*pow(1.0-length2, 4), state.getPotentialEnergy(), 1e-5);
+    const Vec3 testForce2 = Vec3(0.2, -0.1, 0.3);
+    force->setParticleForce(0, 0, testForce2);
+    force->updateForceInContext(context);
+    state = context.getState(State::Energy | State::Forces);
+
+    for (int i = 0; i < 3; i++) {
+        ASSERT_EQUAL_TOL(state.getForces()[0][i], testForce2[i], 1e-5);
+    }
 }
 
 int main() {
     try {
         registerConstForceReferenceKernelFactories();
         testForce();
-        testChangingParameters();
     }
     catch(const std::exception& e) {
         std::cout << "exception: " << e.what() << std::endl;

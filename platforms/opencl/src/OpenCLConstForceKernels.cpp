@@ -96,12 +96,12 @@ double OpenCLCalcConstForceKernel::execute(ContextImpl& context, bool includeFor
     return 0.0;
 }
 
-void OpenCLCalcConstForceKernel::copyParametersToContext(ContextImpl& context, const ConstForce& force) {
+void OpenCLCalcConstForceKernel::copyForceToContext(ContextImpl& context, const ConstForce& force) {
     int numContexts = cl.getPlatformData().contexts.size();
     int startIndex = cl.getContextIndex()*force.getNumBonds()/numContexts;
     int endIndex = (cl.getContextIndex()+1)*force.getNumBonds()/numContexts;
     if (numBonds != endIndex-startIndex)
-        throw OpenMMException("updateParametersInContext: The number of bonds has changed");
+        throw OpenMMException("updateForceInContext: The number of bonds has changed");
     if (numBonds == 0)
         return;
     

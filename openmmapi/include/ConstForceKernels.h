@@ -72,7 +72,7 @@ public:
      * @param context    the context to copy parameters to
      * @param force      the ConstForce to copy the parameters from
      */
-    virtual void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force) = 0;
+    virtual void copyForceToContext(OpenMM::ContextImpl& context, const ConstForce& force) = 0;
 };
 
 } // namespace ConstForcePlugin

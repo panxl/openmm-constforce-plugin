@@ -33,67 +33,48 @@
 #include "ConstForce.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
-#include "openmm/reference/RealVec.h"
 #include "openmm/reference/ReferencePlatform.h"
 
 using namespace ConstForcePlugin;
 using namespace OpenMM;
 using namespace std;
 
-static vector<RealVec>& extractPositions(ContextImpl& context) {
+static vector<Vec3>& extractForces(ContextImpl& context) {
     ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
-    return *((vector<RealVec>*) data->positions);
-}
-
-static vector<RealVec>& extractForces(ContextImpl& context) {
-    ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
-    return *((vector<RealVec>*) data->forces);
+    return *((vector<Vec3>*) data->forces);
 }
 
 void ReferenceCalcConstForceKernel::initialize(const System& system, const ConstForce& force) {
-    // Initialize bond parameters.
+    // Initialize constant force.
     
-    int numBonds = force.getNumBonds();
-    particle1.resize(numBonds);
-    particle2.resize(numBonds);
-    length.resize(numBonds);
-    k.resize(numBonds);
-    for (int i = 0; i < numBonds; i++)
-        force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
+    int numParticles = force.getNumParticles();
+    particle.resize(numParticles);
+    pforce.resize(numParticles);
+    for (int i = 0; i < numParticles; i++)
+        force.getParticleForce(i, particle[i], pforce[i]);
 }
 
 double ReferenceCalcConstForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
-    vector<RealVec>& pos = extractPositions(context);
-    vector<RealVec>& force = extractForces(context);
-    int numBonds = particle1.size();
+    vector<Vec3>& force = extractForces(context);
+    int numParticles = particle.size();
     double energy = 0;
     
-    // Compute the interactions.
+    // Assign the constant force.
     
-    for (int i = 0; i < numBonds; i++) {
-        int p1 = particle1[i];
-        int p2 = particle2[i];
-        RealVec delta = pos[p1]-pos[p2];
-        RealOpenMM r2 = delta.dot(delta);
-        RealOpenMM r = sqrt(r2);
-        RealOpenMM dr = (r-length[i]);
-        RealOpenMM dr2 = dr*dr;
-        energy += k[i]*dr2*dr2;
-        RealOpenMM dEdR = 4*k[i]*dr2*dr;
-        dEdR = (r > 0) ? (dEdR/r) : 0;
-        force[p1] -= delta*dEdR;
-        force[p2] += delta*dEdR;
+    for (int i = 0; i < numParticles; i++) {
+        int p = particle[i];
+        force[p] += pforce[i];
     }
     return energy;
 }
 
-void ReferenceCalcConstForceKernel::copyParametersToContext(ContextImpl& context, const ConstForce& force) {
-    if (force.getNumBonds() != particle1.size())
-        throw OpenMMException("updateParametersInContext: The number of ConstForce bonds has changed");
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int p1, p2;
-        force.getBondParameters(i, p1, p2, length[i], k[i]);
-        if (p1 != particle1[i] || p2 != particle2[i])
-            throw OpenMMException("updateParametersInContext: A particle index has changed");
+void ReferenceCalcConstForceKernel::copyForceToContext(ContextImpl& context, const ConstForce& force) {
+    if (force.getNumParticles() != particle.size())
+        throw OpenMMException("updateForceInContext: The number of particles has changed");
+    for (int i = 0; i < force.getNumParticles(); i++) {
+        int p;
+        force.getParticleForce(i, p, pforce[i]);
+        if (p != particle[i])
+            throw OpenMMException("updateForceInContext: A particle index has changed");
     }
 }

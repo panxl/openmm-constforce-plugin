@@ -37,12 +37,9 @@
 #include <vector>
 #include "internal/windowsExportConstForce.h"
 
-namespace ConstForcePlugin {
+using namespace OpenMM;
 
-/**
- * This class implements an anharmonic bond force of the form E(r)=k*(r-length)^4.  It exists to
- * serve as an example of how to write plugins.
- */
+namespace ConstForcePlugin {
 
 class OPENMM_EXPORT_CONSTFORCE ConstForce : public OpenMM::Force {
 public:
@@ -51,51 +48,39 @@ public:
      */
     ConstForce();
     /**
-     * Get the number of bond stretch terms in the potential function
+     * Get the number of particles.
      */
-    int getNumBonds() const {
-        return bonds.size();
+    int getNumParticles() const {
+        return particles.size();
     }
     /**
-     * Add a bond term to the force.
+     * Add a particle term to the force field.
      *
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the force constant for the bond, measured in kJ/mol/nm^4
-     * @return the index of the bond that was added
+     * @param particle     the index of the particle this term is applied to
+     * @param parameters   the list of parameters for the new force term
+     * @return the index of the particle term that was added
      */
-    int addBond(int particle1, int particle2, double length, double k);
+    int addParticle(int particle, const Vec3& force = Vec3(0.0, 0.0, 0.0));
     /**
-     * Get the force field parameters for a bond term.
+     * Get the force and particle index of a constant force.
      * 
-     * @param index     the index of the bond for which to get parameters
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the harmonic force constant for the bond, measured in kJ/mol/nm^4
+     * @param index     the index of the constant force
+     * @param particle  the index of the particle
+     * @param pforce    the value of the constant force
      */
-    void getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const;
+    void getParticleForce(int index, int& particle, Vec3& pforce) const;
     /**
-     * Set the force field parameters for a bond term.
+     * Set the force and particle index of a constant force.
      * 
-     * @param index     the index of the bond for which to set parameters
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the harmonic force constant for the bond, measured in kJ/mol/nm^4
+     * @param index     the index of the constant force
+     * @param particle  the index of the particle
+     * @param pforce    the value of the constant force
      */
-    void setBondParameters(int index, int particle1, int particle2, double length, double k);
+    void setParticleForce(int index, int particle, Vec3 pforce);
     /**
-     * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
-     * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
-     * Simply call setBondParameters() to modify this object's parameters, then call updateParametersInState()
-     * to copy them over to the Context.
-     * 
-     * The only information this method updates is the values of per-bond parameters.  The set of particles involved
-     * in a bond cannot be changed, nor can new bonds be added.
+     * Update the constant forces in a Context to match those stored in this Force object.
      */
-    void updateParametersInContext(OpenMM::Context& context);
+    void updateForceInContext(OpenMM::Context& context);
     /**
      * Returns true if the force uses periodic boundary conditions and false otherwise. Your force should implement this
      * method appropriately to ensure that `System.usesPeriodicBoundaryConditions()` works for all systems containing
@@ -107,24 +92,21 @@ public:
 protected:
     OpenMM::ForceImpl* createImpl() const;
 private:
-    class BondInfo;
-    std::vector<BondInfo> bonds;
+    class ParticleInfo;
+    std::vector<ParticleInfo> particles;
 };
 
 /**
- * This is an internal class used to record information about a bond.
+ * This is an internal class used to record information about a particle.
  * @private
  */
-class ConstForce::BondInfo {
+class ConstForce::ParticleInfo {
 public:
-    int particle1, particle2;
-    double length, k;
-    BondInfo() {
-        particle1 = particle2 = -1;
-        length = k = 0.0;
+    int particle;
+    Vec3 pforce;
+    ParticleInfo() : particle(-1) {
     }
-    BondInfo(int particle1, int particle2, double length, double k) :
-        particle1(particle1), particle2(particle2), length(length), k(k) {
+    ParticleInfo(int particle, const Vec3& pforce) : particle(particle), pforce(pforce) {
     }
 };
 

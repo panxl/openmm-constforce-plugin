@@ -67,11 +67,11 @@ public:
      * @param context    the context to copy parameters to
      * @param force      the ConstForce to copy the parameters from
      */
-    void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force);
+    void copyForceToContext(OpenMM::ContextImpl& context, const ConstForce& force);
 private:
-    int numBonds;
-    std::vector<int> particle1, particle2;
-    std::vector<double> length, k;
+    int numParticles;
+    std::vector<int> particle;
+    std::vector<Vec3> pforce;
 };
 
 } // namespace ConstForcePlugin

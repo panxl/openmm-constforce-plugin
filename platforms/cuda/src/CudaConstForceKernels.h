@@ -69,7 +69,7 @@ public:
      * @param context    the context to copy parameters to
      * @param force      the ConstForce to copy the parameters from
      */
-    void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force);
+    void copyForceToContext(OpenMM::ContextImpl& context, const ConstForce& force);
 private:
     int numBonds;
     bool hasInitializedKernel;

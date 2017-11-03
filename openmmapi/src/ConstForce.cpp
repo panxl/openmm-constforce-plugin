@@ -41,31 +41,27 @@ using namespace std;
 ConstForce::ConstForce() {
 }
 
-int ConstForce::addBond(int particle1, int particle2, double length, double k) {
-    bonds.push_back(BondInfo(particle1, particle2, length, k));
-    return bonds.size()-1;
+int ConstForce::addParticle(int particle, const Vec3& pforce) {
+    particles.push_back(ParticleInfo(particle, pforce));
+    return particles.size()-1;
 }
 
-void ConstForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
-    ASSERT_VALID_INDEX(index, bonds);
-    particle1 = bonds[index].particle1;
-    particle2 = bonds[index].particle2;
-    length = bonds[index].length;
-    k = bonds[index].k;
+void ConstForce::getParticleForce(int index, int& particle, Vec3& pforce) const {
+    ASSERT_VALID_INDEX(index, particles);
+    particle = particles[index].particle;
+    pforce = particles[index].pforce;
 }
 
-void ConstForce::setBondParameters(int index, int particle1, int particle2, double length, double k) {
-    ASSERT_VALID_INDEX(index, bonds);
-    bonds[index].particle1 = particle1;
-    bonds[index].particle2 = particle2;
-    bonds[index].length = length;
-    bonds[index].k = k;
+void ConstForce::setParticleForce(int index, int particle, Vec3 pforce) {
+    ASSERT_VALID_INDEX(index, particles);
+    particles[index].particle = particle;
+    particles[index].pforce = pforce;
 }
 
 ForceImpl* ConstForce::createImpl() const {
     return new ConstForceImpl(*this);
 }
 
-void ConstForce::updateParametersInContext(Context& context) {
-    dynamic_cast<ConstForceImpl&>(getImplInContext(context)).updateParametersInContext(getContextImpl(context));
+void ConstForce::updateForceInContext(Context& context) {
+    dynamic_cast<ConstForceImpl&>(getImplInContext(context)).updateForceInContext(getContextImpl(context));
 }
