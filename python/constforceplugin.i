@@ -48,6 +48,10 @@ import simtk.unit as unit
     val[1] = unit.Quantity(val[1], unit.kilojoule_per_mole/unit.nanometer)
 %}
 
+%pythonappend ConstForcePlugin::ConstForce::getEnergy() const %{
+    val = unit.Quantity(val, unit.kilojoule_per_mole)
+%}
+
 namespace ConstForcePlugin {
 
 class ConstForce : public OpenMM::Force {
@@ -59,6 +63,10 @@ public:
     int addParticle(int particle, Vec3 force = Vec3(0.0, 0.0, 0.0));
 
     void setParticleForce(int index, int particle, Vec3 pforce);
+
+    double getEnergy() const;
+
+    void setEnergy(double input_energy);
 
     void updateForceInContext(OpenMM::Context& context);
 

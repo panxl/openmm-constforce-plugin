@@ -39,6 +39,7 @@ using namespace OpenMM;
 using namespace std;
 
 ConstForce::ConstForce() {
+    energy = 0.0;
 }
 
 int ConstForce::addParticle(int particle, const Vec3& pforce) {
@@ -56,6 +57,14 @@ void ConstForce::setParticleForce(int index, int particle, Vec3 pforce) {
     ASSERT_VALID_INDEX(index, particles);
     particles[index].particle = particle;
     particles[index].pforce = pforce;
+}
+
+double ConstForce::getEnergy() const {
+    return energy;
+}
+
+void ConstForce::setEnergy(double input_energy) {
+    energy = input_energy;
 }
 
 ForceImpl* ConstForce::createImpl() const {

@@ -81,9 +81,13 @@ void testForce() {
     // Modify the parameters.
     
     const Vec3 testForce2 = Vec3(0.2, -0.1, 0.3);
+    expectedEnergy = 1.0;
     force->setParticleForce(0, 0, testForce2);
+    force->setEnergy(expectedEnergy);
     force->updateForceInContext(context);
     state = context.getState(State::Energy | State::Forces);
+
+    ASSERT_EQUAL_TOL(expectedEnergy, state.getPotentialEnergy(), 1e-5);
 
     for (int i = 0; i < 3; i++) {
         ASSERT_EQUAL_TOL(state.getForces()[0][i], testForce2[i], 1e-5);

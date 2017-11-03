@@ -72,6 +72,7 @@ private:
     int numParticles;
     std::vector<int> particle;
     std::vector<Vec3> pforce;
+    double energy;
 };
 
 } // namespace ConstForcePlugin

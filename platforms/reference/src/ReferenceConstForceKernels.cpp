@@ -52,12 +52,12 @@ void ReferenceCalcConstForceKernel::initialize(const System& system, const Const
     pforce.resize(numParticles);
     for (int i = 0; i < numParticles; i++)
         force.getParticleForce(i, particle[i], pforce[i]);
+    energy = force.getEnergy();
 }
 
 double ReferenceCalcConstForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
     vector<Vec3>& force = extractForces(context);
     int numParticles = particle.size();
-    double energy = 0;
     
     // Assign the constant force.
     
@@ -77,4 +77,5 @@ void ReferenceCalcConstForceKernel::copyForceToContext(ContextImpl& context, con
         if (p != particle[i])
             throw OpenMMException("updateForceInContext: A particle index has changed");
     }
+    energy = force.getEnergy();
 }

@@ -78,6 +78,15 @@ public:
      */
     void setParticleForce(int index, int particle, Vec3 pforce);
     /**
+     * Get the energy
+     * @return the energy
+     */
+    double getEnergy() const;
+    /**
+     * Set the energy
+     */
+    void setEnergy(double input_energy);
+    /**
      * Update the constant forces in a Context to match those stored in this Force object.
      */
     void updateForceInContext(OpenMM::Context& context);
@@ -94,6 +103,7 @@ protected:
 private:
     class ParticleInfo;
     std::vector<ParticleInfo> particles;
+    double energy;
 };
 
 /**
