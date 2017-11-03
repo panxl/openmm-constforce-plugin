@@ -1,4 +1,4 @@
-%module exampleplugin
+%module constforceplugin
 
 %import(module="simtk.openmm") "swig/OpenMMSwigHeaders.i"
 %include "swig/typemaps.i"
@@ -16,7 +16,7 @@ namespace std {
 };
 
 %{
-#include "ExampleForce.h"
+#include "ConstForce.h"
 #include "OpenMM.h"
 #include "OpenMMAmoeba.h"
 #include "OpenMMDrude.h"
@@ -32,18 +32,18 @@ import simtk.unit as unit
 /*
  * Add units to function outputs.
 */
-%pythonappend ExamplePlugin::ExampleForce::getBondParameters(int index, int& particle1, int& particle2,
+%pythonappend ConstForcePlugin::ConstForce::getBondParameters(int index, int& particle1, int& particle2,
                                                              double& length, double& k) const %{
     val[2] = unit.Quantity(val[2], unit.nanometer)
     val[3] = unit.Quantity(val[3], unit.kilojoule_per_mole/unit.nanometer**4)
 %}
 
 
-namespace ExamplePlugin {
+namespace ConstForcePlugin {
 
-class ExampleForce : public OpenMM::Force {
+class ConstForce : public OpenMM::Force {
 public:
-    ExampleForce();
+    ConstForce();
 
     int getNumBonds() const;
 

@@ -1,8 +1,5 @@
-#ifndef OPENMM_CUDAEXAMPLEKERNELFACTORY_H_
-#define OPENMM_CUDAEXAMPLEKERNELFACTORY_H_
-
 /* -------------------------------------------------------------------------- *
- *                                   OpenMM                                   *
+ *                                OpenMMConstForce                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,19 +29,34 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
+#ifdef WIN32
+#include <windows.h>
+#include <sstream>
+#else
+#include <dlfcn.h>
+#include <dirent.h>
+#include <cstdlib>
+#endif
 
-namespace OpenMM {
+#include "ConstForce.h"
+#include "ConstForceProxy.h"
+#include "openmm/serialization/SerializationProxy.h"
 
-/**
- * This KernelFactory creates kernels for the CUDA implementation of the Example plugin.
- */
+#if defined(WIN32)
+    #include <windows.h>
+    extern "C" OPENMM_EXPORT_EXAMPLE void registerConstForceSerializationProxies();
+    BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
+        if (ul_reason_for_call == DLL_PROCESS_ATTACH)
+            registerConstForceSerializationProxies();
+        return TRUE;
+    }
+#else
+    extern "C" void __attribute__((constructor)) registerConstForceSerializationProxies();
+#endif
 
-class CudaExampleKernelFactory : public KernelFactory {
-public:
-    KernelImpl* createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const;
-};
+using namespace ConstForcePlugin;
+using namespace OpenMM;
 
-} // namespace OpenMM
-
-#endif /*OPENMM_CUDAEXAMPLEKERNELFACTORY_H_*/
+extern "C" OPENMM_EXPORT_EXAMPLE void registerConstForceSerializationProxies() {
+    SerializationProxy::registerProxy(typeid(ConstForce), new ConstForceProxy());
+}

@@ -1,8 +1,5 @@
-#ifndef OPENMM_OPENCLEXAMPLEKERNELSOURCES_H_
-#define OPENMM_OPENCLEXAMPLEKERNELSOURCES_H_
-
 /* -------------------------------------------------------------------------- *
- *                                   OpenMM                                   *
+ *                                OpenMMExample                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,21 +29,44 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include <string>
+#include "ConstForceProxy.h"
+#include "ConstForce.h"
+#include "openmm/serialization/SerializationNode.h"
+#include <sstream>
 
-namespace ExamplePlugin {
+using namespace ConstForcePlugin;
+using namespace OpenMM;
+using namespace std;
 
-/**
- * This class is a central holding place for the source code of OpenCL kernels.
- * The CMake build script inserts declarations into it based on the .cl files in the
- * kernels subfolder.
- */
+ConstForceProxy::ConstForceProxy() : SerializationProxy("ConstForce") {
+}
 
-class OpenCLExampleKernelSources {
-public:
-@CL_FILE_DECLARATIONS@
-};
+void ConstForceProxy::serialize(const void* object, SerializationNode& node) const {
+    node.setIntProperty("version", 1);
+    const ConstForce& force = *reinterpret_cast<const ConstForce*>(object);
+    SerializationNode& bonds = node.createChildNode("Bonds");
+    for (int i = 0; i < force.getNumBonds(); i++) {
+        int particle1, particle2;
+        double distance, k;
+        force.getBondParameters(i, particle1, particle2, distance, k);
+        bonds.createChildNode("Bond").setIntProperty("p1", particle1).setIntProperty("p2", particle2).setDoubleProperty("d", distance).setDoubleProperty("k", k);
+    }
+}
 
-} // namespace ExamplePlugin
-
-#endif /*OPENMM_OPENCLEXAMPLEKERNELSOURCES_H_*/
+void* ConstForceProxy::deserialize(const SerializationNode& node) const {
+    if (node.getIntProperty("version") != 1)
+        throw OpenMMException("Unsupported version number");
+    ConstForce* force = new ConstForce();
+    try {
+        const SerializationNode& bonds = node.getChildNode("Bonds");
+        for (int i = 0; i < (int) bonds.getChildren().size(); i++) {
+            const SerializationNode& bond = bonds.getChildren()[i];
+            force->addBond(bond.getIntProperty("p1"), bond.getIntProperty("p2"), bond.getDoubleProperty("d"), bond.getDoubleProperty("k"));
+        }
+    }
+    catch (...) {
+        delete force;
+        throw;
+    }
+    return force;
+}

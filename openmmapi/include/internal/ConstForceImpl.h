@@ -1,5 +1,5 @@
-#ifndef OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_
-#define OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_
+#ifndef OPENMM_CONSTFORCEIMPL_H_
+#define OPENMM_CONSTFORCEIMPL_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -32,19 +32,44 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
+#include "ConstForce.h"
+#include "openmm/internal/ForceImpl.h"
+#include "openmm/Kernel.h"
+#include <utility>
+#include <set>
+#include <string>
 
-namespace OpenMM {
+namespace ConstForcePlugin {
+
+class System;
 
 /**
- * This KernelFactory creates kernels for the reference implementation of the Example plugin.
+ * This is the internal implementation of ConstForce.
  */
 
-class ReferenceExampleKernelFactory : public KernelFactory {
+class OPENMM_EXPORT_EXAMPLE ConstForceImpl : public OpenMM::ForceImpl {
 public:
-    KernelImpl* createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const;
+    ConstForceImpl(const ConstForce& owner);
+    ~ConstForceImpl();
+    void initialize(OpenMM::ContextImpl& context);
+    const ConstForce& getOwner() const {
+        return owner;
+    }
+    void updateContextState(OpenMM::ContextImpl& context) {
+        // This force field doesn't update the state directly.
+    }
+    double calcForcesAndEnergy(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, int groups);
+    std::map<std::string, double> getDefaultParameters() {
+        return std::map<std::string, double>(); // This force field doesn't define any parameters.
+    }
+    std::vector<std::string> getKernelNames();
+    std::vector<std::pair<int, int> > getBondedParticles() const;
+    void updateParametersInContext(OpenMM::ContextImpl& context);
+private:
+    const ConstForce& owner;
+    OpenMM::Kernel kernel;
 };
 
-} // namespace OpenMM
+} // namespace ConstForcePlugin
 
-#endif /*OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_*/
+#endif /*OPENMM_CONSTFORCEIMPL_H_*/

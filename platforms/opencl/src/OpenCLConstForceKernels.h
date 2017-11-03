@@ -1,5 +1,8 @@
+#ifndef OPENCL_CONSTFORCE_KERNELS_H_
+#define OPENCL_CONSTFORCE_KERNELS_H_
+
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,34 +32,53 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#ifdef WIN32
-#include <windows.h>
-#include <sstream>
-#else
-#include <dlfcn.h>
-#include <dirent.h>
-#include <cstdlib>
-#endif
+#include "ConstForceKernels.h"
+#include "openmm/opencl/OpenCLContext.h"
+#include "openmm/opencl/OpenCLArray.h"
 
-#include "ExampleForce.h"
-#include "ExampleForceProxy.h"
-#include "openmm/serialization/SerializationProxy.h"
+namespace ConstForcePlugin {
 
-#if defined(WIN32)
-    #include <windows.h>
-    extern "C" OPENMM_EXPORT_EXAMPLE void registerExampleSerializationProxies();
-    BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
-        if (ul_reason_for_call == DLL_PROCESS_ATTACH)
-            registerExampleSerializationProxies();
-        return TRUE;
+/**
+ * This kernel is invoked by ConstForce to calculate the forces acting on the system and the energy of the system.
+ */
+class OpenCLCalcConstForceKernel : public CalcConstForceKernel {
+public:
+    OpenCLCalcConstForceKernel(std::string name, const OpenMM::Platform& platform, OpenMM::OpenCLContext& cl, const OpenMM::System& system) :
+            CalcConstForceKernel(name, platform), hasInitializedKernel(false), cl(cl), system(system), params(NULL) {
     }
-#else
-    extern "C" void __attribute__((constructor)) registerExampleSerializationProxies();
-#endif
 
-using namespace ExamplePlugin;
-using namespace OpenMM;
+    ~OpenCLCalcConstForceKernel();
+    /**
+     * Initialize the kernel.
+     * 
+     * @param system     the System this kernel will be applied to
+     * @param force      the ConstForce this kernel will be used for
+     */
+    void initialize(const OpenMM::System& system, const ConstForce& force);
+    /**
+     * Execute the kernel to calculate the forces and/or energy.
+     *
+     * @param context        the context in which to execute this kernel
+     * @param includeForces  true if forces should be calculated
+     * @param includeEnergy  true if the energy should be calculated
+     * @return the potential energy due to the force
+     */
+    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
+    /**
+     * Copy changed parameters over to a context.
+     *
+     * @param context    the context to copy parameters to
+     * @param force      the ConstForce to copy the parameters from
+     */
+    void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force);
+private:
+    int numBonds;
+    bool hasInitializedKernel;
+    OpenMM::OpenCLContext& cl;
+    const OpenMM::System& system;
+    OpenMM::OpenCLArray* params;
+};
 
-extern "C" OPENMM_EXPORT_EXAMPLE void registerExampleSerializationProxies() {
-    SerializationProxy::registerProxy(typeid(ExampleForce), new ExampleForceProxy());
-}
+} // namespace ConstForcePlugin
+
+#endif /*OPENCL_CONSTFORCE_KERNELS_H_*/

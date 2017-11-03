@@ -1,3 +1,6 @@
+#ifndef OPENMM_CUDACONSTFORCEKERNELFACTORY_H_
+#define OPENMM_CUDACONSTFORCEKERNELFACTORY_H_
+
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
@@ -29,8 +32,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "CudaExampleKernelSources.h"
+#include "openmm/KernelFactory.h"
 
-using namespace ExamplePlugin;
-using namespace std;
+namespace OpenMM {
 
+/**
+ * This KernelFactory creates kernels for the CUDA implementation of the ConstForce plugin.
+ */
+
+class CudaConstForceKernelFactory : public KernelFactory {
+public:
+    KernelImpl* createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const;
+};
+
+} // namespace OpenMM
+
+#endif /*OPENMM_CUDACONSTFORCEKERNELFACTORY_H_*/

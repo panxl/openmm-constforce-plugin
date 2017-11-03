@@ -1,3 +1,6 @@
+#ifndef CUDA_CONSTFORCE_KERNELS_H_
+#define CUDA_CONSTFORCE_KERNELS_H_
+
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
@@ -29,8 +32,52 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "OpenCLExampleKernelSources.h"
+#include "ConstForceKernels.h"
+#include "openmm/cuda/CudaContext.h"
+#include "openmm/cuda/CudaArray.h"
 
-using namespace ExamplePlugin;
-using namespace std;
+namespace ConstForcePlugin {
 
+/**
+ * This kernel is invoked by ConstForce to calculate the forces acting on the system and the energy of the system.
+ */
+class CudaCalcConstForceKernel : public CalcConstForceKernel {
+public:
+    CudaCalcConstForceKernel(std::string name, const OpenMM::Platform& platform, OpenMM::CudaContext& cu, const OpenMM::System& system) :
+            CalcConstForceKernel(name, platform), hasInitializedKernel(false), cu(cu), system(system), params(NULL) {
+    }
+    ~CudaCalcConstForceKernel();
+    /**
+     * Initialize the kernel.
+     * 
+     * @param system     the System this kernel will be applied to
+     * @param force      the ConstForce this kernel will be used for
+     */
+    void initialize(const OpenMM::System& system, const ConstForce& force);
+    /**
+     * Execute the kernel to calculate the forces and/or energy.
+     *
+     * @param context        the context in which to execute this kernel
+     * @param includeForces  true if forces should be calculated
+     * @param includeEnergy  true if the energy should be calculated
+     * @return the potential energy due to the force
+     */
+    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
+    /**
+     * Copy changed parameters over to a context.
+     *
+     * @param context    the context to copy parameters to
+     * @param force      the ConstForce to copy the parameters from
+     */
+    void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force);
+private:
+    int numBonds;
+    bool hasInitializedKernel;
+    OpenMM::CudaContext& cu;
+    const OpenMM::System& system;
+    OpenMM::CudaArray* params;
+};
+
+} // namespace ConstForcePlugin
+
+#endif /*CUDA_CONSTFORCE_KERNELS_H_*/

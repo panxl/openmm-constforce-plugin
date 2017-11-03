@@ -1,5 +1,5 @@
-#ifndef OPENCL_EXAMPLE_KERNELS_H_
-#define OPENCL_EXAMPLE_KERNELS_H_
+#ifndef OPENMM_OPENCLCONSTFORCEKERNELFACTORY_H_
+#define OPENMM_OPENCLCONSTFORCEKERNELFACTORY_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -32,53 +32,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleKernels.h"
-#include "openmm/opencl/OpenCLContext.h"
-#include "openmm/opencl/OpenCLArray.h"
+#include "openmm/KernelFactory.h"
 
-namespace ExamplePlugin {
+namespace ConstForcePlugin {
 
 /**
- * This kernel is invoked by ExampleForce to calculate the forces acting on the system and the energy of the system.
+ * This KernelFactory creates kernels for the OpenCL implementation of the ConstForce plugin.
  */
-class OpenCLCalcExampleForceKernel : public CalcExampleForceKernel {
-public:
-    OpenCLCalcExampleForceKernel(std::string name, const OpenMM::Platform& platform, OpenMM::OpenCLContext& cl, const OpenMM::System& system) :
-            CalcExampleForceKernel(name, platform), hasInitializedKernel(false), cl(cl), system(system), params(NULL) {
-    }
 
-    ~OpenCLCalcExampleForceKernel();
-    /**
-     * Initialize the kernel.
-     * 
-     * @param system     the System this kernel will be applied to
-     * @param force      the ExampleForce this kernel will be used for
-     */
-    void initialize(const OpenMM::System& system, const ExampleForce& force);
-    /**
-     * Execute the kernel to calculate the forces and/or energy.
-     *
-     * @param context        the context in which to execute this kernel
-     * @param includeForces  true if forces should be calculated
-     * @param includeEnergy  true if the energy should be calculated
-     * @return the potential energy due to the force
-     */
-    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
-    /**
-     * Copy changed parameters over to a context.
-     *
-     * @param context    the context to copy parameters to
-     * @param force      the ExampleForce to copy the parameters from
-     */
-    void copyParametersToContext(OpenMM::ContextImpl& context, const ExampleForce& force);
-private:
-    int numBonds;
-    bool hasInitializedKernel;
-    OpenMM::OpenCLContext& cl;
-    const OpenMM::System& system;
-    OpenMM::OpenCLArray* params;
+class OpenCLConstForceKernelFactory : public OpenMM::KernelFactory {
+public:
+    OpenMM::KernelImpl* createKernelImpl(std::string name, const OpenMM::Platform& platform, OpenMM::ContextImpl& context) const;
 };
 
-} // namespace ExamplePlugin
+} // namespace ConstForcePlugin
 
-#endif /*OPENCL_EXAMPLE_KERNELS_H_*/
+#endif /*OPENMM_OPENCLCONSTFORCEKERNELFACTORY_H_*/

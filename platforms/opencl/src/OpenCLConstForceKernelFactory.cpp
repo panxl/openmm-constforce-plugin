@@ -1,8 +1,5 @@
-#ifndef OPENMM_CUDAEXAMPLEKERNELSOURCES_H_
-#define OPENMM_CUDAEXAMPLEKERNELSOURCES_H_
-
 /* -------------------------------------------------------------------------- *
- *                                   OpenMM                                   *
+ *                              OpenMMExample                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,21 +29,44 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include <string>
+#include <exception>
 
-namespace ExamplePlugin {
+#include "OpenCLConstForceKernelFactory.h"
+#include "OpenCLConstForceKernels.h"
+#include "openmm/internal/windowsExport.h"
+#include "openmm/internal/ContextImpl.h"
+#include "openmm/OpenMMException.h"
 
-/**
- * This class is a central holding place for the source code of CUDA kernels.
- * The CMake build script inserts declarations into it based on the .cu files in the
- * kernels subfolder.
- */
+using namespace ConstForcePlugin;
+using namespace OpenMM;
 
-class CudaExampleKernelSources {
-public:
-@CUDA_FILE_DECLARATIONS@
-};
+extern "C" OPENMM_EXPORT void registerPlatforms() {
+}
 
-} // namespace ExamplePlugin
+extern "C" OPENMM_EXPORT void registerKernelFactories() {
+    try {
+        Platform& platform = Platform::getPlatformByName("OpenCL");
+        OpenCLConstForceKernelFactory* factory = new OpenCLConstForceKernelFactory();
+        platform.registerKernelFactory(CalcConstForceKernel::Name(), factory);
+    }
+    catch (std::exception ex) {
+        // Ignore
+    }
+}
 
-#endif /*OPENMM_CUDAEXAMPLEKERNELSOURCES_H_*/
+extern "C" OPENMM_EXPORT void registerConstForceOpenCLKernelFactories() {
+    try {
+        Platform::getPlatformByName("OpenCL");
+    }
+    catch (...) {
+        Platform::registerPlatform(new OpenCLPlatform());
+    }
+    registerKernelFactories();
+}
+
+KernelImpl* OpenCLConstForceKernelFactory::createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const {
+    OpenCLContext& cl = *static_cast<OpenCLPlatform::PlatformData*>(context.getPlatformData())->contexts[0];
+    if (name == CalcConstForceKernel::Name())
+        return new OpenCLCalcConstForceKernel(name, platform, cl, context.getSystem());
+    throw OpenMMException((std::string("Tried to create kernel with illegal kernel name '")+name+"'").c_str());
+}

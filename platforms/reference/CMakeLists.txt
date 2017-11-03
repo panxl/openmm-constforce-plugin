@@ -5,7 +5,7 @@
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(OPENMMEXAMPLEREFERENCE_LIBRARY_NAME ExamplePluginReference)
+SET(OPENMMEXAMPLEREFERENCE_LIBRARY_NAME ConstForcePluginReference)
 
 SET(SHARED_TARGET ${OPENMMEXAMPLEREFERENCE_LIBRARY_NAME})
 

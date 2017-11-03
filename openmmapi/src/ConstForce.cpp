@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- *
- *                              OpenMMExample                                   *
+ *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,35 +29,43 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ReferenceExampleKernelFactory.h"
-#include "ReferenceExampleKernels.h"
-#include "openmm/reference/ReferencePlatform.h"
-#include "openmm/internal/ContextImpl.h"
+#include "ConstForce.h"
+#include "internal/ConstForceImpl.h"
 #include "openmm/OpenMMException.h"
+#include "openmm/internal/AssertionUtilities.h"
 
-using namespace ExamplePlugin;
+using namespace ConstForcePlugin;
 using namespace OpenMM;
+using namespace std;
 
-extern "C" OPENMM_EXPORT void registerPlatforms() {
+ConstForce::ConstForce() {
 }
 
-extern "C" OPENMM_EXPORT void registerKernelFactories() {
-    for (int i = 0; i < Platform::getNumPlatforms(); i++) {
-        Platform& platform = Platform::getPlatform(i);
-        if (dynamic_cast<ReferencePlatform*>(&platform) != NULL) {
-            ReferenceExampleKernelFactory* factory = new ReferenceExampleKernelFactory();
-            platform.registerKernelFactory(CalcExampleForceKernel::Name(), factory);
-        }
-    }
+int ConstForce::addBond(int particle1, int particle2, double length, double k) {
+    bonds.push_back(BondInfo(particle1, particle2, length, k));
+    return bonds.size()-1;
 }
 
-extern "C" OPENMM_EXPORT void registerExampleReferenceKernelFactories() {
-    registerKernelFactories();
+void ConstForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
+    ASSERT_VALID_INDEX(index, bonds);
+    particle1 = bonds[index].particle1;
+    particle2 = bonds[index].particle2;
+    length = bonds[index].length;
+    k = bonds[index].k;
 }
 
-KernelImpl* ReferenceExampleKernelFactory::createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const {
-    ReferencePlatform::PlatformData& data = *static_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
-    if (name == CalcExampleForceKernel::Name())
-        return new ReferenceCalcExampleForceKernel(name, platform);
-    throw OpenMMException((std::string("Tried to create kernel with illegal kernel name '")+name+"'").c_str());
+void ConstForce::setBondParameters(int index, int particle1, int particle2, double length, double k) {
+    ASSERT_VALID_INDEX(index, bonds);
+    bonds[index].particle1 = particle1;
+    bonds[index].particle2 = particle2;
+    bonds[index].length = length;
+    bonds[index].k = k;
+}
+
+ForceImpl* ConstForce::createImpl() const {
+    return new ConstForceImpl(*this);
+}
+
+void ConstForce::updateParametersInContext(Context& context) {
+    dynamic_cast<ConstForceImpl&>(getImplInContext(context)).updateParametersInContext(getContextImpl(context));
 }

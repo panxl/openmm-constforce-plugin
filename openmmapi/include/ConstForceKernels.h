@@ -1,5 +1,8 @@
+#ifndef CONSTFORCE_KERNELS_H_
+#define CONSTFORCE_KERNELS_H_
+
 /* -------------------------------------------------------------------------- *
- *                              OpenMMExample                                   *
+ *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,44 +32,49 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include <exception>
+#include "ConstForce.h"
+#include "openmm/KernelImpl.h"
+#include "openmm/Platform.h"
+#include "openmm/System.h"
+#include <string>
 
-#include "CudaExampleKernelFactory.h"
-#include "CudaExampleKernels.h"
-#include "openmm/internal/windowsExport.h"
-#include "openmm/internal/ContextImpl.h"
-#include "openmm/OpenMMException.h"
+namespace ConstForcePlugin {
 
-using namespace ExamplePlugin;
-using namespace OpenMM;
-
-extern "C" OPENMM_EXPORT void registerPlatforms() {
-}
-
-extern "C" OPENMM_EXPORT void registerKernelFactories() {
-    try {
-        Platform& platform = Platform::getPlatformByName("CUDA");
-        CudaExampleKernelFactory* factory = new CudaExampleKernelFactory();
-        platform.registerKernelFactory(CalcExampleForceKernel::Name(), factory);
+/**
+ * This kernel is invoked by ConstForce to calculate the forces acting on the system and the energy of the system.
+ */
+class CalcConstForceKernel : public OpenMM::KernelImpl {
+public:
+    static std::string Name() {
+        return "CalcConstForce";
     }
-    catch (std::exception ex) {
-        // Ignore
+    CalcConstForceKernel(std::string name, const OpenMM::Platform& platform) : OpenMM::KernelImpl(name, platform) {
     }
-}
+    /**
+     * Initialize the kernel.
+     * 
+     * @param system     the System this kernel will be applied to
+     * @param force      the ConstForce this kernel will be used for
+     */
+    virtual void initialize(const OpenMM::System& system, const ConstForce& force) = 0;
+    /**
+     * Execute the kernel to calculate the forces and/or energy.
+     *
+     * @param context        the context in which to execute this kernel
+     * @param includeForces  true if forces should be calculated
+     * @param includeEnergy  true if the energy should be calculated
+     * @return the potential energy due to the force
+     */
+    virtual double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy) = 0;
+    /**
+     * Copy changed parameters over to a context.
+     *
+     * @param context    the context to copy parameters to
+     * @param force      the ConstForce to copy the parameters from
+     */
+    virtual void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force) = 0;
+};
 
-extern "C" OPENMM_EXPORT void registerExampleCudaKernelFactories() {
-    try {
-        Platform::getPlatformByName("CUDA");
-    }
-    catch (...) {
-        Platform::registerPlatform(new CudaPlatform());
-    }
-    registerKernelFactories();
-}
+} // namespace ConstForcePlugin
 
-KernelImpl* CudaExampleKernelFactory::createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const {
-    CudaContext& cu = *static_cast<CudaPlatform::PlatformData*>(context.getPlatformData())->contexts[0];
-    if (name == CalcExampleForceKernel::Name())
-        return new CudaCalcExampleForceKernel(name, platform, cu, context.getSystem());
-    throw OpenMMException((std::string("Tried to create kernel with illegal kernel name '")+name+"'").c_str());
-}
+#endif /*CONSTFORCE_KERNELS_H_*/

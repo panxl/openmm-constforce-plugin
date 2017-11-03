@@ -1,6 +1,3 @@
-#ifndef CUDA_EXAMPLE_KERNELS_H_
-#define CUDA_EXAMPLE_KERNELS_H_
-
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
@@ -32,52 +29,55 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleKernels.h"
-#include "openmm/cuda/CudaContext.h"
-#include "openmm/cuda/CudaArray.h"
+#ifdef WIN32
+  #define _USE_MATH_DEFINES // Needed to get M_PI
+#endif
+#include "internal/ConstForceImpl.h"
+#include "ConstForceKernels.h"
+#include "openmm/OpenMMException.h"
+#include "openmm/internal/ContextImpl.h"
+#include <cmath>
+#include <map>
+#include <set>
+#include <sstream>
 
-namespace ExamplePlugin {
+using namespace ConstForcePlugin;
+using namespace OpenMM;
+using namespace std;
 
-/**
- * This kernel is invoked by ExampleForce to calculate the forces acting on the system and the energy of the system.
- */
-class CudaCalcExampleForceKernel : public CalcExampleForceKernel {
-public:
-    CudaCalcExampleForceKernel(std::string name, const OpenMM::Platform& platform, OpenMM::CudaContext& cu, const OpenMM::System& system) :
-            CalcExampleForceKernel(name, platform), hasInitializedKernel(false), cu(cu), system(system), params(NULL) {
+ConstForceImpl::ConstForceImpl(const ConstForce& owner) : owner(owner) {
+}
+
+ConstForceImpl::~ConstForceImpl() {
+}
+
+void ConstForceImpl::initialize(ContextImpl& context) {
+    kernel = context.getPlatform().createKernel(CalcConstForceKernel::Name(), context);
+    kernel.getAs<CalcConstForceKernel>().initialize(context.getSystem(), owner);
+}
+
+double ConstForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
+    if ((groups&(1<<owner.getForceGroup())) != 0)
+        return kernel.getAs<CalcConstForceKernel>().execute(context, includeForces, includeEnergy);
+    return 0.0;
+}
+
+std::vector<std::string> ConstForceImpl::getKernelNames() {
+    std::vector<std::string> names;
+    names.push_back(CalcConstForceKernel::Name());
+    return names;
+}
+
+vector<pair<int, int> > ConstForceImpl::getBondedParticles() const {
+    int numBonds = owner.getNumBonds();
+    vector<pair<int, int> > bonds(numBonds);
+    for (int i = 0; i < numBonds; i++) {
+        double length, k;
+        owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
     }
-    ~CudaCalcExampleForceKernel();
-    /**
-     * Initialize the kernel.
-     * 
-     * @param system     the System this kernel will be applied to
-     * @param force      the ExampleForce this kernel will be used for
-     */
-    void initialize(const OpenMM::System& system, const ExampleForce& force);
-    /**
-     * Execute the kernel to calculate the forces and/or energy.
-     *
-     * @param context        the context in which to execute this kernel
-     * @param includeForces  true if forces should be calculated
-     * @param includeEnergy  true if the energy should be calculated
-     * @return the potential energy due to the force
-     */
-    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
-    /**
-     * Copy changed parameters over to a context.
-     *
-     * @param context    the context to copy parameters to
-     * @param force      the ExampleForce to copy the parameters from
-     */
-    void copyParametersToContext(OpenMM::ContextImpl& context, const ExampleForce& force);
-private:
-    int numBonds;
-    bool hasInitializedKernel;
-    OpenMM::CudaContext& cu;
-    const OpenMM::System& system;
-    OpenMM::CudaArray* params;
-};
+    return bonds;
+}
 
-} // namespace ExamplePlugin
-
-#endif /*CUDA_EXAMPLE_KERNELS_H_*/
+void ConstForceImpl::updateParametersInContext(ContextImpl& context) {
+    kernel.getAs<CalcConstForceKernel>().copyParametersToContext(context, owner);
+}

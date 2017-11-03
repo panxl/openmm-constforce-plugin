@@ -1,3 +1,6 @@
+#ifndef OPENMM_REFERENCECONSTFORCEKERNELFACTORY_H_
+#define OPENMM_REFERENCECONSTFORCEKERNELFACTORY_H_
+
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
@@ -29,55 +32,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#ifdef WIN32
-  #define _USE_MATH_DEFINES // Needed to get M_PI
-#endif
-#include "internal/ExampleForceImpl.h"
-#include "ExampleKernels.h"
-#include "openmm/OpenMMException.h"
-#include "openmm/internal/ContextImpl.h"
-#include <cmath>
-#include <map>
-#include <set>
-#include <sstream>
+#include "openmm/KernelFactory.h"
 
-using namespace ExamplePlugin;
-using namespace OpenMM;
-using namespace std;
+namespace OpenMM {
 
-ExampleForceImpl::ExampleForceImpl(const ExampleForce& owner) : owner(owner) {
-}
+/**
+ * This KernelFactory creates kernels for the reference implementation of the ConstForce plugin.
+ */
 
-ExampleForceImpl::~ExampleForceImpl() {
-}
+class ReferenceConstForceKernelFactory : public KernelFactory {
+public:
+    KernelImpl* createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const;
+};
 
-void ExampleForceImpl::initialize(ContextImpl& context) {
-    kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
-    kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
-}
+} // namespace OpenMM
 
-double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
-    if ((groups&(1<<owner.getForceGroup())) != 0)
-        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy);
-    return 0.0;
-}
-
-std::vector<std::string> ExampleForceImpl::getKernelNames() {
-    std::vector<std::string> names;
-    names.push_back(CalcExampleForceKernel::Name());
-    return names;
-}
-
-vector<pair<int, int> > ExampleForceImpl::getBondedParticles() const {
-    int numBonds = owner.getNumBonds();
-    vector<pair<int, int> > bonds(numBonds);
-    for (int i = 0; i < numBonds; i++) {
-        double length, k;
-        owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
-    }
-    return bonds;
-}
-
-void ExampleForceImpl::updateParametersInContext(ContextImpl& context) {
-    kernel.getAs<CalcExampleForceKernel>().copyParametersToContext(context, owner);
-}
+#endif /*OPENMM_REFERENCECONSTFORCEKERNELFACTORY_H_*/

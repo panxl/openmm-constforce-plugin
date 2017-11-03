@@ -30,10 +30,10 @@
  * -------------------------------------------------------------------------- */
 
 /**
- * This tests the Reference implementation of ExampleForce.
+ * This tests the Reference implementation of ConstForce.
  */
 
-#include "ExampleForce.h"
+#include "ConstForce.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include "openmm/Context.h"
 #include "openmm/Platform.h"
@@ -43,11 +43,11 @@
 #include <iostream>
 #include <vector>
 
-using namespace ExamplePlugin;
+using namespace ConstForcePlugin;
 using namespace OpenMM;
 using namespace std;
 
-extern "C" OPENMM_EXPORT void registerExampleCudaKernelFactories();
+extern "C" OPENMM_EXPORT void registerConstForceCudaKernelFactories();
 
 void testForce() {
     // Create a chain of particles connected by bonds.
@@ -60,7 +60,7 @@ void testForce() {
         system.addParticle(1.0);
         positions[i] = Vec3(i, 0.1*i, -0.3*i);
     }
-    ExampleForce* force = new ExampleForce();
+    ConstForce* force = new ConstForce();
     system.addForce(force);
     for (int i = 0; i < numBonds; i++)
         force->addBond(i, i+1, 1.0+sin(0.8*i), cos(0.3*i));
@@ -111,7 +111,7 @@ void testChangingParameters() {
     System system;
     system.addParticle(1.0);
     system.addParticle(1.0);
-    ExampleForce* force = new ExampleForce();
+    ConstForce* force = new ConstForce();
     force->addBond(0, 1, length, k);
     system.addForce(force);
     vector<Vec3> positions(2);
@@ -138,7 +138,7 @@ void testChangingParameters() {
 
 int main(int argc, char* argv[]) {
     try {
-        registerExampleCudaKernelFactories();
+        registerConstForceCudaKernelFactories();
         if (argc > 1)
             Platform::getPlatformByName("CUDA").setPropertyDefaultValue("CudaPrecision", string(argv[1]));
         testForce();

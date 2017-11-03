@@ -29,7 +29,7 @@ ENDIF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
 SET(EXAMPLE_PLUGIN_SOURCE_SUBDIRS openmmapi serialization)
 
 # Set the library name
-SET(EXAMPLE_LIBRARY_NAME ExamplePlugin)
+SET(EXAMPLE_LIBRARY_NAME ConstForcePlugin)
 SET(SHARED_EXAMPLE_TARGET ${EXAMPLE_LIBRARY_NAME})
 
 # These are all the places to search for header files which are to be part of the API.

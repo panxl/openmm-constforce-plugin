@@ -29,19 +29,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "CudaExampleKernels.h"
-#include "CudaExampleKernelSources.h"
+#include "OpenCLConstForceKernels.h"
+#include "OpenCLConstForceKernelSources.h"
 #include "openmm/internal/ContextImpl.h"
-#include "openmm/cuda/CudaBondedUtilities.h"
-#include "openmm/cuda/CudaForceInfo.h"
+#include "openmm/opencl/OpenCLBondedUtilities.h"
+#include "openmm/opencl/OpenCLForceInfo.h"
 
-using namespace ExamplePlugin;
+using namespace ConstForcePlugin;
 using namespace OpenMM;
 using namespace std;
 
-class CudaExampleForceInfo : public CudaForceInfo {
+class OpenCLConstForceInfo : public OpenCLForceInfo {
 public:
-    CudaExampleForceInfo(const ExampleForce& force) : force(force) {
+    OpenCLConstForceInfo(const ConstForce& force) : OpenCLForceInfo(0), force(force) {
     }
     int getNumParticleGroups() {
         return force.getNumBonds();
@@ -62,47 +62,44 @@ public:
         return (length1 == length2 && k1 == k2);
     }
 private:
-    const ExampleForce& force;
+    const ConstForce& force;
 };
 
-CudaCalcExampleForceKernel::~CudaCalcExampleForceKernel() {
-    cu.setAsCurrent();
+OpenCLCalcConstForceKernel::~OpenCLCalcConstForceKernel() {
     if (params != NULL)
         delete params;
 }
 
-void CudaCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
-    cu.setAsCurrent();
-    int numContexts = cu.getPlatformData().contexts.size();
-    int startIndex = cu.getContextIndex()*force.getNumBonds()/numContexts;
-    int endIndex = (cu.getContextIndex()+1)*force.getNumBonds()/numContexts;
+void OpenCLCalcConstForceKernel::initialize(const System& system, const ConstForce& force) {
+    int numContexts = cl.getPlatformData().contexts.size();
+    int startIndex = cl.getContextIndex()*force.getNumBonds()/numContexts;
+    int endIndex = (cl.getContextIndex()+1)*force.getNumBonds()/numContexts;
     numBonds = endIndex-startIndex;
     if (numBonds == 0)
         return;
     vector<vector<int> > atoms(numBonds, vector<int>(2));
-    params = CudaArray::create<float2>(cu, numBonds, "bondParams");
-    vector<float2> paramVector(numBonds);
+    params = OpenCLArray::create<mm_float2>(cl, numBonds, "bondParams");
+    vector<mm_float2> paramVector(numBonds);
     for (int i = 0; i < numBonds; i++) {
         double length, k;
         force.getBondParameters(startIndex+i, atoms[i][0], atoms[i][1], length, k);
-        paramVector[i] = make_float2((float) length, (float) k);
+        paramVector[i] = mm_float2((cl_float) length, (cl_float) k);
     }
     params->upload(paramVector);
     map<string, string> replacements;
-    replacements["PARAMS"] = cu.getBondedUtilities().addArgument(params->getDevicePointer(), "float2");
-    cu.getBondedUtilities().addInteraction(atoms, cu.replaceStrings(CudaExampleKernelSources::exampleForce, replacements), force.getForceGroup());
-    cu.addForce(new CudaExampleForceInfo(force));
+    replacements["PARAMS"] = cl.getBondedUtilities().addArgument(params->getDeviceBuffer(), "float2");
+    cl.getBondedUtilities().addInteraction(atoms, cl.replaceStrings(OpenCLConstForceKernelSources::constForce, replacements), force.getForceGroup());
+    cl.addForce(new OpenCLConstForceInfo(force));
 }
 
-double CudaCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+double OpenCLCalcConstForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
     return 0.0;
 }
 
-void CudaCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {
-    cu.setAsCurrent();
-    int numContexts = cu.getPlatformData().contexts.size();
-    int startIndex = cu.getContextIndex()*force.getNumBonds()/numContexts;
-    int endIndex = (cu.getContextIndex()+1)*force.getNumBonds()/numContexts;
+void OpenCLCalcConstForceKernel::copyParametersToContext(ContextImpl& context, const ConstForce& force) {
+    int numContexts = cl.getPlatformData().contexts.size();
+    int startIndex = cl.getContextIndex()*force.getNumBonds()/numContexts;
+    int endIndex = (cl.getContextIndex()+1)*force.getNumBonds()/numContexts;
     if (numBonds != endIndex-startIndex)
         throw OpenMMException("updateParametersInContext: The number of bonds has changed");
     if (numBonds == 0)
@@ -110,16 +107,17 @@ void CudaCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, c
     
     // Record the per-bond parameters.
     
-    vector<float2> paramVector(numBonds);
+    vector<mm_float2> paramVector(numBonds);
     for (int i = 0; i < numBonds; i++) {
         int atom1, atom2;
         double length, k;
         force.getBondParameters(startIndex+i, atom1, atom2, length, k);
-        paramVector[i] = make_float2((float) length, (float) k);
+        paramVector[i] = mm_float2((cl_float) length, (cl_float) k);
     }
     params->upload(paramVector);
     
     // Mark that the current reordering may be invalid.
     
-    cu.invalidateMolecules();
+    cl.invalidateMolecules();
 }
+

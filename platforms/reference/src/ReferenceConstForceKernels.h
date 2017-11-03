@@ -1,5 +1,8 @@
+#ifndef REFERENCE_CONSTFORCE_KERNELS_H_
+#define REFERENCE_CONSTFORCE_KERNELS_H_
+
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,59 +32,48 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleForce.h"
+#include "ConstForceKernels.h"
 #include "openmm/Platform.h"
-#include "openmm/internal/AssertionUtilities.h"
-#include "openmm/serialization/XmlSerializer.h"
-#include <iostream>
-#include <sstream>
+#include <vector>
 
-using namespace ExamplePlugin;
-using namespace OpenMM;
-using namespace std;
+namespace ConstForcePlugin {
 
-extern "C" void registerExampleSerializationProxies();
-
-void testSerialization() {
-    // Create a Force.
-
-    ExampleForce force;
-    force.addBond(0, 1, 1.0, 2.0);
-    force.addBond(0, 2, 2.0, 2.1);
-    force.addBond(2, 3, 3.0, 2.2);
-    force.addBond(5, 1, 4.0, 2.3);
-
-    // Serialize and then deserialize it.
-
-    stringstream buffer;
-    XmlSerializer::serialize<ExampleForce>(&force, "Force", buffer);
-    ExampleForce* copy = XmlSerializer::deserialize<ExampleForce>(buffer);
-
-    // Compare the two forces to see if they are identical.
-
-    ExampleForce& force2 = *copy;
-    ASSERT_EQUAL(force.getNumBonds(), force2.getNumBonds());
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int a1, a2, b1, b2;
-        double da, db, ka, kb;
-        force.getBondParameters(i, a1, a2, da, ka);
-        force2.getBondParameters(i, b1, b2, db, kb);
-        ASSERT_EQUAL(a1, b1);
-        ASSERT_EQUAL(a2, b2);
-        ASSERT_EQUAL(da, db);
-        ASSERT_EQUAL(ka, kb);
+/**
+ * This kernel is invoked by ConstForce to calculate the forces acting on the system and the energy of the system.
+ */
+class ReferenceCalcConstForceKernel : public CalcConstForceKernel {
+public:
+    ReferenceCalcConstForceKernel(std::string name, const OpenMM::Platform& platform) : CalcConstForceKernel(name, platform) {
     }
-}
+    /**
+     * Initialize the kernel.
+     * 
+     * @param system     the System this kernel will be applied to
+     * @param force      the ConstForce this kernel will be used for
+     */
+    void initialize(const OpenMM::System& system, const ConstForce& force);
+    /**
+     * Execute the kernel to calculate the forces and/or energy.
+     *
+     * @param context        the context in which to execute this kernel
+     * @param includeForces  true if forces should be calculated
+     * @param includeEnergy  true if the energy should be calculated
+     * @return the potential energy due to the force
+     */
+    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
+    /**
+     * Copy changed parameters over to a context.
+     *
+     * @param context    the context to copy parameters to
+     * @param force      the ConstForce to copy the parameters from
+     */
+    void copyParametersToContext(OpenMM::ContextImpl& context, const ConstForce& force);
+private:
+    int numBonds;
+    std::vector<int> particle1, particle2;
+    std::vector<double> length, k;
+};
 
-int main() {
-    try {
-        registerExampleSerializationProxies();
-        testSerialization();
-    }
-    catch(const exception& e) {
-        cout << "exception: " << e.what() << endl;
-        return 1;
-    }
-    cout << "Done" << endl;
-    return 0;
-}
+} // namespace ConstForcePlugin
+
+#endif /*REFERENCE_CONSTFORCE_KERNELS_H_*/

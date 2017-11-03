@@ -5,7 +5,7 @@
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(OPENMMEXAMPLEOPENCL_LIBRARY_NAME ExamplePluginOpenCL)
+SET(OPENMMEXAMPLEOPENCL_LIBRARY_NAME ConstForcePluginOpenCL)
 
 SET(SHARED_TARGET ${OPENMMEXAMPLEOPENCL_LIBRARY_NAME})
 
@@ -39,7 +39,7 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR}/platforms/opencl/src)
 # Set variables needed for encoding kernel sources into a C++ class
 
 SET(CL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-SET(CL_SOURCE_CLASS OpenCLExampleKernelSources)
+SET(CL_SOURCE_CLASS OpenCLConstForceKernelSources)
 SET(CL_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/${CL_SOURCE_CLASS}.cpp)
 SET(CL_KERNELS_H ${CMAKE_CURRENT_BINARY_DIR}/src/${CL_SOURCE_CLASS}.h)
 SET(SOURCE_FILES ${SOURCE_FILES} ${CL_KERNELS_CPP} ${CL_KERNELS_H})

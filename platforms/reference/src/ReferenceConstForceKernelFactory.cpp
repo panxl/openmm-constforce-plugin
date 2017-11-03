@@ -1,8 +1,5 @@
-#ifndef OPENMM_EXAMPLE_FORCE_PROXY_H_
-#define OPENMM_EXAMPLE_FORCE_PROXY_H_
-
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                              OpenMMExample                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,22 +29,35 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "internal/windowsExportExample.h"
-#include "openmm/serialization/SerializationProxy.h"
+#include "ReferenceConstForceKernelFactory.h"
+#include "ReferenceConstForceKernels.h"
+#include "openmm/reference/ReferencePlatform.h"
+#include "openmm/internal/ContextImpl.h"
+#include "openmm/OpenMMException.h"
 
-namespace OpenMM {
+using namespace ConstForcePlugin;
+using namespace OpenMM;
 
-/**
- * This is a proxy for serializing ExampleForce objects.
- */
+extern "C" OPENMM_EXPORT void registerPlatforms() {
+}
 
-class OPENMM_EXPORT_EXAMPLE ExampleForceProxy : public SerializationProxy {
-public:
-    ExampleForceProxy();
-    void serialize(const void* object, SerializationNode& node) const;
-    void* deserialize(const SerializationNode& node) const;
-};
+extern "C" OPENMM_EXPORT void registerKernelFactories() {
+    for (int i = 0; i < Platform::getNumPlatforms(); i++) {
+        Platform& platform = Platform::getPlatform(i);
+        if (dynamic_cast<ReferencePlatform*>(&platform) != NULL) {
+            ReferenceConstForceKernelFactory* factory = new ReferenceConstForceKernelFactory();
+            platform.registerKernelFactory(CalcConstForceKernel::Name(), factory);
+        }
+    }
+}
 
-} // namespace OpenMM
+extern "C" OPENMM_EXPORT void registerConstForceReferenceKernelFactories() {
+    registerKernelFactories();
+}
 
-#endif /*OPENMM_EXAMPLE_FORCE_PROXY_H_*/
+KernelImpl* ReferenceConstForceKernelFactory::createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const {
+    ReferencePlatform::PlatformData& data = *static_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
+    if (name == CalcConstForceKernel::Name())
+        return new ReferenceCalcConstForceKernel(name, platform);
+    throw OpenMMException((std::string("Tried to create kernel with illegal kernel name '")+name+"'").c_str());
+}

@@ -1,8 +1,8 @@
-#ifndef OPENMM_OPENCLEXAMPLEKERNELFACTORY_H_
-#define OPENMM_OPENCLEXAMPLEKERNELFACTORY_H_
+#ifndef OPENMM_EXAMPLE_FORCE_PROXY_H_
+#define OPENMM_EXAMPLE_FORCE_PROXY_H_
 
 /* -------------------------------------------------------------------------- *
- *                                   OpenMM                                   *
+ *                                OpenMMExample                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,19 +32,22 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
+#include "internal/windowsExportExample.h"
+#include "openmm/serialization/SerializationProxy.h"
 
-namespace ExamplePlugin {
+namespace OpenMM {
 
 /**
- * This KernelFactory creates kernels for the OpenCL implementation of the Example plugin.
+ * This is a proxy for serializing ConstForce objects.
  */
 
-class OpenCLExampleKernelFactory : public OpenMM::KernelFactory {
+class OPENMM_EXPORT_EXAMPLE ConstForceProxy : public SerializationProxy {
 public:
-    OpenMM::KernelImpl* createKernelImpl(std::string name, const OpenMM::Platform& platform, OpenMM::ContextImpl& context) const;
+    ConstForceProxy();
+    void serialize(const void* object, SerializationNode& node) const;
+    void* deserialize(const SerializationNode& node) const;
 };
 
-} // namespace ExamplePlugin
+} // namespace OpenMM
 
-#endif /*OPENMM_OPENCLEXAMPLEKERNELFACTORY_H_*/
+#endif /*OPENMM_EXAMPLE_FORCE_PROXY_H_*/

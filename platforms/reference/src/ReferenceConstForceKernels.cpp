@@ -29,14 +29,14 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ReferenceExampleKernels.h"
-#include "ExampleForce.h"
+#include "ReferenceConstForceKernels.h"
+#include "ConstForce.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
 #include "openmm/reference/RealVec.h"
 #include "openmm/reference/ReferencePlatform.h"
 
-using namespace ExamplePlugin;
+using namespace ConstForcePlugin;
 using namespace OpenMM;
 using namespace std;
 
@@ -50,7 +50,7 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
     return *((vector<RealVec>*) data->forces);
 }
 
-void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
+void ReferenceCalcConstForceKernel::initialize(const System& system, const ConstForce& force) {
     // Initialize bond parameters.
     
     int numBonds = force.getNumBonds();
@@ -62,7 +62,7 @@ void ReferenceCalcExampleForceKernel::initialize(const System& system, const Exa
         force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
 }
 
-double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+double ReferenceCalcConstForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
     vector<RealVec>& pos = extractPositions(context);
     vector<RealVec>& force = extractForces(context);
     int numBonds = particle1.size();
@@ -87,9 +87,9 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     return energy;
 }
 
-void ReferenceCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {
+void ReferenceCalcConstForceKernel::copyParametersToContext(ContextImpl& context, const ConstForce& force) {
     if (force.getNumBonds() != particle1.size())
-        throw OpenMMException("updateParametersInContext: The number of Example bonds has changed");
+        throw OpenMMException("updateParametersInContext: The number of ConstForce bonds has changed");
     for (int i = 0; i < force.getNumBonds(); i++) {
         int p1, p2;
         force.getBondParameters(i, p1, p2, length[i], k[i]);

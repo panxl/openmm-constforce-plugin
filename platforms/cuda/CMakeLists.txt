@@ -5,7 +5,7 @@
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(EXAMPLE_CUDA_LIBRARY_NAME ExamplePluginCUDA)
+SET(EXAMPLE_CUDA_LIBRARY_NAME ConstForcePluginCUDA)
 
 SET(SHARED_TARGET ${EXAMPLE_CUDA_LIBRARY_NAME})
 
@@ -39,7 +39,7 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR}/platforms/cuda/src)
 # Set variables needed for encoding kernel sources into a C++ class
 
 SET(CUDA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-SET(CUDA_SOURCE_CLASS CudaExampleKernelSources)
+SET(CUDA_SOURCE_CLASS CudaConstForceKernelSources)
 SET(CUDA_KERNELS_CPP ${CMAKE_CURRENT_BINARY_DIR}/src/${CUDA_SOURCE_CLASS}.cpp)
 SET(CUDA_KERNELS_H ${CMAKE_CURRENT_BINARY_DIR}/src/${CUDA_SOURCE_CLASS}.h)
 SET(SOURCE_FILES ${SOURCE_FILES} ${CUDA_KERNELS_CPP} ${CUDA_KERNELS_H})
